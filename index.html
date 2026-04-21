@@ -109,11 +109,24 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
+  cursor: pointer;
 }
 .item-title {
   font-size: 15px;
   font-weight: 600;
   color: #1f2329;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.item-title::after {
+  content: "▼";
+  font-size: 12px;
+  color: #86909c;
+  transition: transform 0.2s;
+}
+.item-title.collapsed::after {
+  transform: rotate(-90deg);
 }
 .btn-delete-item {
   color: #f53f3f;
@@ -131,11 +144,19 @@ body {
   border-color: #f53f3f;
 }
 
-/* 表单布局 */
+/* 表单内容区域 - 收起展开 */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  max-height: 2000px;
+  opacity: 1;
+}
+.form-grid.collapsed {
+  max-height: 0;
+  opacity: 0;
 }
 @media (max-width: 768px) {
   .form-grid {
@@ -323,12 +344,12 @@ textarea {
       <!-- 独立改进建议输入框 仅数字 -->
       <div class="suggestion-group">
         <div class="form-group">
-          <label>改进建议</label>
+          <label>改进建议分值</label>
           <input 
             type="number" 
             id="improveSuggestion" 
             class="suggestion-input" 
-            placeholder="请输入" 
+            placeholder="请输入数字" 
             oninput="value=value.replace(/[^\d]/g,'')"
           />
         </div>
@@ -349,7 +370,6 @@ const cancelBtn = document.getElementById('cancelBtn')
 const nonconformList = document.getElementById('nonconformList')
 const addItemBtn = document.getElementById('addItemBtn')
 const submitBtn = document.getElementById('submitBtn')
-// 改进建议输入框
 const improveSuggestion = document.getElementById('improveSuggestion')
 
 const templateItem = nonconformList.querySelector('.nonconform-item')
@@ -367,6 +387,20 @@ modalOverlay.addEventListener('click', (e) => {
   if (e.target === modalOverlay) closeModal()
 })
 
+// 绑定收起展开事件
+function bindCollapseEvent(itemEl) {
+  const header = itemEl.querySelector('.item-header')
+  const title = itemEl.querySelector('.item-title')
+  const form = itemEl.querySelector('.form-grid')
+  
+  header.addEventListener('click', (e) => {
+    // 避免点击删除按钮时触发收起
+    if (e.target.closest('.btn-delete-item')) return
+    title.classList.toggle('collapsed')
+    form.classList.toggle('collapsed')
+  })
+}
+
 // 添加不符合项
 addItemBtn.addEventListener('click', () => {
   const newItem = templateItem.cloneNode(true)
@@ -374,13 +408,11 @@ addItemBtn.addEventListener('click', () => {
   newItem.dataset.index = currentIndex
   newItem.querySelector('.item-title').textContent = `不符合项 #${currentIndex + 1}`
 
-  // 重置所有表单字段
   const inputs = newItem.querySelectorAll('input, textarea')
   inputs.forEach(input => {
     if (input.name) {
       input.name = input.name.replace(/\[\d+\]/, `[${currentIndex}]`)
     }
-    // 单选框处理：程度默认选中一般不符合
     if (input.type === 'radio') {
       input.checked = input.name.includes('degree') && input.value === '一般不符合'
     } else {
@@ -389,6 +421,7 @@ addItemBtn.addEventListener('click', () => {
   })
 
   bindDeleteEvent(newItem)
+  bindCollapseEvent(newItem) // 绑定收起展开
   nonconformList.appendChild(newItem)
   itemIndex++
 })
@@ -415,7 +448,6 @@ function reorderItems() {
     item.dataset.index = i
     item.querySelector('.item-title').textContent = `不符合项 #${i + 1}`
     
-    // 更新所有 name 属性
     item.querySelectorAll('input, textarea').forEach(input => {
       if (input.name) {
         input.name = input.name.replace(/\[\d+\]/, `[${i}]`)
@@ -424,8 +456,9 @@ function reorderItems() {
   })
 }
 
-// 初始化默认项的删除事件
+// 初始化
 bindDeleteEvent(templateItem)
+bindCollapseEvent(templateItem)
 
 // 提交校验与数据收集
 submitBtn.addEventListener('click', () => {
@@ -441,7 +474,6 @@ submitBtn.addEventListener('click', () => {
     const clause = item.querySelector(`textarea[name="clause[${i}]"]`).value.trim()
     const file = item.querySelector(`input[name="fileInfo[${i}]"]`).value.trim()
 
-    // 校验逻辑
     if (!degree) {
       alert(`第 ${i+1} 项：请选择不符合程度`)
       valid = false
@@ -474,14 +506,11 @@ submitBtn.addEventListener('click', () => {
   }
 
   if (!valid) return
-
-  // 获取改进建议（数字）
   const suggestionValue = improveSuggestion.value.trim()
 
-  // 最终提交数据
   const submitData = {
     nonConformItems: data,
-    improveSuggestion: suggestionValue // 独立数字字段
+    improveSuggestion: suggestionValue
   }
 
   console.log('最终提交数据：', submitData)
