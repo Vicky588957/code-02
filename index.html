@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>不符合项添加弹窗</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+body {
+  background: #f0f2f5;
+  padding: 0;
+}
+
+/* 遮罩 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.3s;
+}
+
+/* 弹窗 */
+.modal {
+  width: 90%;
+  max-width: 1100px;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(0);
+}
+
+/* 头部 */
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1f2329;
+}
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #86909c;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.btn-close:hover {
+  background: #f2f3f5;
+  color: #1f2329;
+}
+
+/* 内容区 */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.nonconform-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 不符合项卡片 */
+.nonconform-item {
+  border: 1px solid #e5e6eb;
+  border-radius: 10px;
+  padding: 20px;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+.nonconform-item:hover {
+  border-color: #d0d8e6;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.item-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2329;
+}
+.btn-delete-item {
+  color: #f53f3f;
+  background: #fff1f0;
+  border: 1px solid #ffd5d3;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-delete-item:hover {
+  background: #f53f3f;
+  color: #fff;
+  border-color: #f53f3f;
+}
+
+/* 表单布局 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-group.full {
+  grid-column: 1 / -1;
+}
+.form-group label {
+  font-size: 14px;
+  color: #4e5969;
+  font-weight: 500;
+}
+.form-group label span {
+  color: #f53f3f;
+}
+
+input,
+textarea,
+select {
+  padding: 10px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+input:focus,
+textarea:focus {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+/* 单选多选组 */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 8px 0;
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: normal;
+  color: #1f2329;
+}
+.checkbox-group input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* 添加按钮 */
+.btn-add {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: 1px dashed #1677ff;
+  background: #e8f3ff;
+  color: #1677ff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  width: 180px;
+}
+.btn-add:hover {
+  background: #1677ff;
+  color: #fff;
+}
+
+/* 独立改进建议输入框样式 */
+.suggestion-group {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+.suggestion-input {
+  max-width: 400px;
+}
+
+/* 底部按钮 */
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.btn-cancel {
+  padding: 9px 20px;
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4e5969;
+  transition: all 0.2s;
+}
+.btn-cancel:hover {
+  background: #f2f3f5;
+}
+.btn-submit {
+  padding: 9px 24px;
+  background: #1677ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(22, 119, 255, 0.2);
+  transition: all 0.2s;
+}
+.btn-submit:hover {
+  background: #4096ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加不符合项</h3>
+      <button class="btn-close" id="closeModalBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="nonconform-list" id="nonconformList">
+        <div class="nonconform-item" data-index="0">
+          <div class="item-header">
+            <span class="item-title">不符合项 #1</span>
+            <button class="btn-delete-item">删除此项</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>程度 <span>*</span></label>
+              <div class="checkbox-group">
+                <label><input type="radio" name="degree[0]" value="一般不符合" checked />一般不符合</label>
+                <label><input type="radio" name="degree[0]" value="严重不符合" />严重不符合</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>分类 <span>*</span></label>
+              <div class="checkbox-group">
+                <label><input type="radio" name="category[0]" value="资源性不符合" />资源性</label>
+                <label><input type="radio" name="category[0]" value="体系性不符合" />体系性</label>
+                <label><input type="radio" name="category[0]" value="实施性不符合" />实施性</label>
+                <label><input type="radio" name="category[0]" value="效果性不符合" />效果性</label>
+              </div>
+            </div>
+
+            <div class="form-group full">
+              <label>文件名称及编号</label>
+              <input type="text" name="fileInfo[0]" placeholder="例如：MSP301《有机产品认证管理方案》" />
+            </div>
+
+            <div class="form-group full">
+              <label>不符合事实描述 <span>*</span></label>
+              <textarea name="description[0]" placeholder="请详细描述不符合事实…"></textarea>
+            </div>
+
+            <div class="form-group full">
+              <label>不符合条款及内容 <span>*</span></label>
+              <textarea name="clause[0]" placeholder="请填写对应的条款号与内容…"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add" id="addItemBtn">+ 添加一条不符合项</button>
+
+      <!-- 独立改进建议输入框 仅数字 -->
+      <div class="suggestion-group">
+        <div class="form-group">
+          <label>改进建议分值</label>
+          <input 
+            type="number" 
+            id="improveSuggestion" 
+            class="suggestion-input" 
+            placeholder="请输入数字" 
+            oninput="value=value.replace(/[^\d]/g,'')"
+          />
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="cancelBtn">取消</button>
+      <button class="btn-submit" id="submitBtn">确认提交</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const modalOverlay = document.getElementById('modalOverlay')
+const closeModalBtn = document.getElementById('closeModalBtn')
+const cancelBtn = document.getElementById('cancelBtn')
+const nonconformList = document.getElementById('nonconformList')
+const addItemBtn = document.getElementById('addItemBtn')
+const submitBtn = document.getElementById('submitBtn')
+// 改进建议输入框
+const improveSuggestion = document.getElementById('improveSuggestion')
+
+const templateItem = nonconformList.querySelector('.nonconform-item')
+let itemIndex = 1
+
+// 关闭弹窗
+function closeModal() {
+  modalOverlay.style.display = 'none'
+}
+
+// 关闭事件绑定
+closeModalBtn.addEventListener('click', closeModal)
+cancelBtn.addEventListener('click', closeModal)
+modalOverlay.addEventListener('click', (e) => {
+  if (e.target === modalOverlay) closeModal()
+})
+
+// 添加不符合项
+addItemBtn.addEventListener('click', () => {
+  const newItem = templateItem.cloneNode(true)
+  const currentIndex = itemIndex
+  newItem.dataset.index = currentIndex
+  newItem.querySelector('.item-title').textContent = `不符合项 #${currentIndex + 1}`
+
+  // 重置所有表单字段
+  const inputs = newItem.querySelectorAll('input, textarea')
+  inputs.forEach(input => {
+    if (input.name) {
+      input.name = input.name.replace(/\[\d+\]/, `[${currentIndex}]`)
+    }
+    // 单选框处理：程度默认选中一般不符合
+    if (input.type === 'radio') {
+      input.checked = input.name.includes('degree') && input.value === '一般不符合'
+    } else {
+      input.value = ''
+    }
+  })
+
+  bindDeleteEvent(newItem)
+  nonconformList.appendChild(newItem)
+  itemIndex++
+})
+
+// 删除事件绑定
+function bindDeleteEvent(itemEl) {
+  const delBtn = itemEl.querySelector('.btn-delete-item')
+  delBtn.addEventListener('click', () => {
+    if (nonconformList.children.length <= 1) {
+      alert('至少保留一条不符合项')
+      return
+    }
+    itemEl.remove()
+    reorderItems()
+  })
+}
+
+// 重新排序所有项
+function reorderItems() {
+  const items = nonconformList.querySelectorAll('.nonconform-item')
+  itemIndex = items.length
+
+  items.forEach((item, i) => {
+    item.dataset.index = i
+    item.querySelector('.item-title').textContent = `不符合项 #${i + 1}`
+    
+    // 更新所有 name 属性
+    item.querySelectorAll('input, textarea').forEach(input => {
+      if (input.name) {
+        input.name = input.name.replace(/\[\d+\]/, `[${i}]`)
+      }
+    })
+  })
+}
+
+// 初始化默认项的删除事件
+bindDeleteEvent(templateItem)
+
+// 提交校验与数据收集
+submitBtn.addEventListener('click', () => {
+  const items = nonconformList.querySelectorAll('.nonconform-item')
+  const data = []
+  let valid = true
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    const degree = item.querySelector(`input[name="degree[${i}]"]:checked`)?.value
+    const category = item.querySelector(`input[name="category[${i}]"]:checked`)?.value
+    const desc = item.querySelector(`textarea[name="description[${i}]"]`).value.trim()
+    const clause = item.querySelector(`textarea[name="clause[${i}]"]`).value.trim()
+    const file = item.querySelector(`input[name="fileInfo[${i}]"]`).value.trim()
+
+    // 校验逻辑
+    if (!degree) {
+      alert(`第 ${i+1} 项：请选择不符合程度`)
+      valid = false
+      break
+    }
+    if (!category) {
+      alert(`第 ${i+1} 项：请选择分类`)
+      valid = false
+      break
+    }
+    if (!desc) {
+      alert(`第 ${i+1} 项：请填写不符合事实描述`)
+      valid = false
+      break
+    }
+    if (!clause) {
+      alert(`第 ${i+1} 项：请填写不符合条款`)
+      valid = false
+      break
+    }
+
+    data.push({
+      index: i + 1,
+      degree,
+      category,
+      fileInfo: file,
+      description: desc,
+      clause
+    })
+  }
+
+  if (!valid) return
+
+  // 获取改进建议（数字）
+  const suggestionValue = improveSuggestion.value.trim()
+
+  // 最终提交数据
+  const submitData = {
+    nonConformItems: data,
+    improveSuggestion: suggestionValue // 独立数字字段
+  }
+
+  console.log('最终提交数据：', submitData)
+  alert('提交成功！数据已打印到控制台')
+  closeModal()
+})
+</script>
+</body>
+</html>
