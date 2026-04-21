@@ -11,10 +11,6 @@
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
-body {
-  background: #f0f2f5;
-  padding: 0;
-}
 
 /* 遮罩 */
 .modal-overlay {
@@ -28,9 +24,6 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 999;
-  opacity: 1;
-  visibility: visible;
-  transition: all 0.3s;
 }
 
 /* 弹窗 */
@@ -44,7 +37,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform: translateY(0);
 }
 
 /* 头部 */
@@ -72,7 +64,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
 }
 .btn-close:hover {
   background: #f2f3f5;
@@ -97,12 +88,6 @@ body {
   border-radius: 10px;
   padding: 20px;
   background: #fafafa;
-  transition: all 0.2s;
-}
-.nonconform-item:hover {
-  border-color: #d0d8e6;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 .item-header {
   display: flex;
@@ -136,7 +121,6 @@ body {
   padding: 5px 12px;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 .btn-delete-item:hover {
   background: #f53f3f;
@@ -187,7 +171,6 @@ select {
   border: 1px solid #dcdfe6;
   border-radius: 8px;
   font-size: 14px;
-  transition: border-color 0.2s;
   outline: none;
 }
 input:focus,
@@ -232,7 +215,6 @@ textarea {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.2s;
   width: 180px;
 }
 .btn-add:hover {
@@ -266,7 +248,6 @@ textarea {
   cursor: pointer;
   font-size: 14px;
   color: #4e5969;
-  transition: all 0.2s;
 }
 .btn-cancel:hover {
   background: #f2f3f5;
@@ -279,15 +260,12 @@ textarea {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  box-shadow: 0 2px 6px rgba(22, 119, 255, 0.2);
-  transition: all 0.2s;
 }
 .btn-submit:hover {
   background: #4096ff;
 }
 </style>
 </head>
-
 <body>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -344,12 +322,12 @@ textarea {
       <!-- 独立改进建议输入框 仅数字 -->
       <div class="suggestion-group">
         <div class="form-group">
-          <label>改进建议数量</label>
+          <label>改进建议分值</label>
           <input 
             type="number" 
             id="improveSuggestion" 
             class="suggestion-input" 
-            placeholder="请输入" 
+            placeholder="请输入数字" 
             oninput="value=value.replace(/[^\d]/g,'')"
           />
         </div>
@@ -472,7 +450,6 @@ submitBtn.addEventListener('click', () => {
     const category = item.querySelector(`input[name="category[${i}]"]:checked`)?.value
     const desc = item.querySelector(`textarea[name="description[${i}]"]`).value.trim()
     const clause = item.querySelector(`textarea[name="clause[${i}]"]`).value.trim()
-    const file = item.querySelector(`input[name="fileInfo[${i}]"]`).value.trim()
 
     if (!degree) {
       alert(`第 ${i+1} 项：请选择不符合程度`)
@@ -499,7 +476,7 @@ submitBtn.addEventListener('click', () => {
       index: i + 1,
       degree,
       category,
-      fileInfo: file,
+      fileInfo: item.querySelector(`input[name="fileInfo[${i}]"]`).value.trim(),
       description: desc,
       clause
     })
